@@ -104,6 +104,23 @@ A modernização envolve a divisão da aplicação monolítica em microserviços
     - Gerencia o envio e logística dos pedidos.
     - Escalável para otimizar rotas e acompanhar entregas.
 
+# Tabelas De Para
+
+## Funcionalidade Monolítica para Microsserviço Correspondente
+
+| Funcionalidade Monolítica       | Microsserviço Correspondente                  | Nome no `main-manifest.yaml`   |
+| ------------------------------- | --------------------------------------------- | ------------------------------ |
+| Interface de usuário (frontend) | User Interface (Frontend) Service             | `ui-frontend`                  |
+| Administração do site           | Admin Interface (Site Administration) Service | `admin-interface`              |
+| Gerenciamento de produtos       | Product Management Service                    | `product-management`           |
+| Processamento de pedidos        | Order Processing Service                      | `order-processing`             |
+| Gestão de clientes              | Customer Management Service                   | `customer-management`          |
+| Sistema de pagamento            | Payment Processing Service                    | `payment-processing`           |
+| Autenticação e Autorização      | Authentication and Authorization Service      | `authentication-authorization` |
+| Notificações                    | Notification Service                          | `notification`                 |
+| Gerenciamento de Estoque        | Inventory Management Service                  | `inventory-management`         |
+| Envio e Logística               | Shipping and Logistics Service                | `shipping-logistics`           |
+
 ### Kubernetes Components
 
 - **Pods:** Cada microserviço será implementado em um ou mais pods.
