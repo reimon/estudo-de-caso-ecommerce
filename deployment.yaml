@@ -7,7 +7,7 @@ metadata:
   labels:
     app: ui-frontend
 spec:
-  replicas: 3 # Número inicial de réplicas do pod
+  replicas: 3
   selector:
     matchLabels:
       app: ui-frontend
@@ -60,6 +60,575 @@ spec:
       targetPort: 80 # Porta do contêiner
   type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
 ---
+# Deployment do microsserviço admin-interface
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-interface
+  namespace: ecommerce
+  labels:
+    app: admin-interface
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-interface
+  template:
+    metadata:
+      labels:
+        app: admin-interface
+    spec:
+      containers:
+        - name: admin-interface
+          image: myregistry/admin-interface:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8081 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8081
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8081
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço admin-interface
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-interface
+  namespace: ecommerce
+spec:
+  selector:
+    app: admin-interface # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8081 # Porta do serviço
+      targetPort: 8081 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço product-management
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-management
+  namespace: ecommerce
+  labels:
+    app: product-management
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: product-management
+  template:
+    metadata:
+      labels:
+        app: product-management
+    spec:
+      containers:
+        - name: product-management
+          image: myregistry/product-management:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8082 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8082
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8082
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço product-management
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-management
+  namespace: ecommerce
+spec:
+  selector:
+    app: product-management # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8082 # Porta do serviço
+      targetPort: 8082 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço order-processing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processing
+  namespace: ecommerce
+  labels:
+    app: order-processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-processing
+  template:
+    metadata:
+      labels:
+        app: order-processing
+    spec:
+      containers:
+        - name: order-processing
+          image: myregistry/order-processing:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8083 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: COSMOS_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: cosmos-db-connection
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8083
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8083
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço order-processing
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-processing
+  namespace: ecommerce
+spec:
+  selector:
+    app: order-processing # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8083 # Porta do serviço
+      targetPort: 8083 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço customer-management
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-management
+  namespace: ecommerce
+  labels:
+    app: customer-management
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: customer-management
+  template:
+    metadata:
+      labels:
+        app: customer-management
+    spec:
+      containers:
+        - name: customer-management
+          image: myregistry/customer-management:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8084 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8084
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8084
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço customer-management
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-management
+  namespace: ecommerce
+spec:
+  selector:
+    app: customer-management # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8084 # Porta do serviço
+      targetPort: 8084 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço payment-processing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-processing
+  namespace: ecommerce
+  labels:
+    app: payment-processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-processing
+  template:
+    metadata:
+      labels:
+        app: payment-processing
+    spec:
+      containers:
+        - name: payment-processing
+          image: myregistry/payment-processing:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8085 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8085
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8085
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço payment-processing
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-processing
+  namespace: ecommerce
+spec:
+  selector:
+    app: payment-processing # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8085 # Porta do serviço
+      targetPort: 8085 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço authentication-authorization
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentication-authorization
+  namespace: ecommerce
+  labels:
+    app: authentication-authorization
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: authentication-authorization
+  template:
+    metadata:
+      labels:
+        app: authentication-authorization
+    spec:
+      containers:
+        - name: authentication-authorization
+          image: myregistry/authentication-authorization:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8086 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8086
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8086
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço authentication-authorization
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentication-authorization
+  namespace: ecommerce
+spec:
+  selector:
+    app: authentication-authorization # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8086 # Porta do serviço
+      targetPort: 8086 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço notification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification
+  namespace: ecommerce
+  labels:
+    app: notification
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification
+  template:
+    metadata:
+      labels:
+        app: notification
+    spec:
+      containers:
+        - name: notification
+          image: myregistry/notification:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8087 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8087
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8087
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço notification
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification
+  namespace: ecommerce
+spec:
+  selector:
+    app: notification # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8087 # Porta do serviço
+      targetPort: 8087 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço inventory-management
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-management
+  namespace: ecommerce
+  labels:
+    app: inventory-management
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inventory-management
+  template:
+    metadata:
+      labels:
+        app: inventory-management
+    spec:
+      containers:
+        - name: inventory-management
+          image: myregistry/inventory-management:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8088 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8088
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8088
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço inventory-management
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-management
+  namespace: ecommerce
+spec:
+  selector:
+    app: inventory-management # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8088 # Porta do serviço
+      targetPort: 8088 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Deployment do microsserviço shipping-logistics
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping-logistics
+  namespace: ecommerce
+  labels:
+    app: shipping-logistics
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shipping-logistics
+  template:
+    metadata:
+      labels:
+        app: shipping-logistics
+    spec:
+      containers:
+        - name: shipping-logistics
+          image: myregistry/shipping-logistics:latest # Imagem do contêiner
+          ports:
+            - containerPort: 8089 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          env:
+            - name: SQL_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: sql-db-connection
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 8089
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 8089
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+---
+# Serviço do microsserviço shipping-logistics
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipping-logistics
+  namespace: ecommerce
+spec:
+  selector:
+    app: shipping-logistics # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 8089 # Porta do serviço
+      targetPort: 8089 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
 # Configuração do HorizontalPodAutoscaler (HPA) para o microsserviço ui-frontend
 apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
@@ -71,8 +640,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: ui-frontend
-  minReplicas: 6 # Número mínimo de réplicas
-  maxReplicas: 26 # Número máximo de réplicas
+  minReplicas: 2 # Número mínimo de réplicas
+  maxReplicas: 10 # Número máximo de réplicas
   metrics:
     - type: Resource
       resource:
