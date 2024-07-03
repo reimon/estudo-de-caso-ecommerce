@@ -1,0 +1,199 @@
+# Deployment do microsserviço ui-frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-frontend
+  namespace: ecommerce
+  labels:
+    app: ui-frontend
+spec:
+  replicas: 3 # Número inicial de réplicas do pod
+  selector:
+    matchLabels:
+      app: ui-frontend
+  template:
+    metadata:
+      labels:
+        app: ui-frontend
+    spec:
+      containers:
+        - name: ui-frontend
+          image: myregistry/ui-frontend:latest # Imagem do contêiner
+          ports:
+            - containerPort: 80 # Porta exposta pelo contêiner
+          resources:
+            limits:
+              memory: "256Mi" # Memória máxima permitida
+              cpu: "200m" # CPU máxima permitida (200 milliCPU)
+            requests:
+              memory: "128Mi" # Memória inicial solicitada
+              cpu: "100m" # CPU inicial solicitada
+          livenessProbe:
+            httpGet:
+              path: /healthz # Caminho para a verificação de liveness
+              port: 80
+            initialDelaySeconds: 30 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          readinessProbe:
+            httpGet:
+              path: /ready # Caminho para a verificação de readiness
+              port: 80
+            initialDelaySeconds: 5 # Tempo de espera antes da primeira verificação
+            periodSeconds: 10 # Intervalo entre as verificações
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 30"] # Comando executado antes do contêiner ser parado
+---
+# Serviço do microsserviço ui-frontend
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-frontend
+  namespace: ecommerce
+spec:
+  selector:
+    app: ui-frontend # Selector para mapear o serviço aos pods correspondentes
+  ports:
+    - protocol: TCP
+      port: 80 # Porta do serviço
+      targetPort: 80 # Porta do contêiner
+  type: ClusterIP # Tipo de serviço que expõe o serviço internamente no cluster
+---
+# Configuração do HorizontalPodAutoscaler (HPA) para o microsserviço ui-frontend
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ui-frontend-hpa
+  namespace: ecommerce
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ui-frontend
+  minReplicas: 6 # Número mínimo de réplicas
+  maxReplicas: 26 # Número máximo de réplicas
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu # Métrica utilizada para o autoescalonamento (CPU)
+        target:
+          type: Utilization
+          averageUtilization: 50 # Utilização média alvo da CPU
+---
+# Política de rede padrão que bloqueia todo o tráfego de entrada e saída por padrão
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress # Aplica regras de entrada
+    - Egress # Aplica regras de saída
+  ingress: [] # Nenhum tráfego de entrada permitido
+  egress: [] # Nenhum tráfego de saída permitido
+---
+# Política de rede que permite o tráfego de entrada do serviço ui-frontend para o serviço order-processing
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ui-to-api
+  namespace: ecommerce
+spec:
+  podSelector:
+    matchLabels:
+      app: order-processing # Selector para o serviço order-processing
+  policyTypes:
+    - Ingress # Aplica regras de entrada
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ui-frontend # Permite tráfego de entrada dos pods com label app: ui-frontend
+      ports:
+        - protocol: TCP
+          port: 8083 # Porta de destino
+---
+# Ingress Controller que gerencia o acesso externo aos serviços no cluster Kubernetes
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: ecommerce
+spec:
+  rules:
+    - host: ecommerce.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui-frontend # Serviço backend para o caminho raiz
+                port:
+                  number: 80
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-interface # Serviço backend para o caminho /admin
+                port:
+                  number: 8081
+          - path: /products
+            pathType: Prefix
+            backend:
+              service:
+                name: product-management # Serviço backend para o caminho /products
+                port:
+                  number: 8082
+          - path: /orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order-processing # Serviço backend para o caminho /orders
+                port:
+                  number: 8083
+          - path: /customers
+            pathType: Prefix
+            backend:
+              service:
+                name: customer-management # Serviço backend para o caminho /customers
+                port:
+                  number: 8084
+          - path: /payments
+            pathType: Prefix
+            backend:
+              service:
+                name: payment-processing # Serviço backend para o caminho /payments
+                port:
+                  number: 8085
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: authentication-authorization # Serviço backend para o caminho /auth
+                port:
+                  number: 8086
+          - path: /notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: notification # Serviço backend para o caminho /notifications
+                port:
+                  number: 8087
+          - path: /inventory
+            pathType: Prefix
+            backend:
+              service:
+                name: inventory-management # Serviço backend para o caminho /inventory
+                port:
+                  number: 8088
+          - path: /shipping
+            pathType: Prefix
+            backend:
+              service:
+                name: shipping-logistics # Serviço backend para o caminho /shipping
+                port:
+                  number: 8089

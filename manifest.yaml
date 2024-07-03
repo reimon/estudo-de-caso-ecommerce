@@ -1,8 +1,12 @@
+# Namespace
+# Define o namespace "ecommerce" para agrupar todos os recursos relacionados à aplicação
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ecommerce
 ---
+# Secret
+# Armazena de forma segura as strings de conexão para o Azure Cosmos DB e o Azure SQL Database
 apiVersion: v1
 kind: Secret
 metadata:
@@ -13,6 +17,11 @@ data:
   cosmos-db-connection: <base64-encoded-cosmos-db-connection-string>
   sql-db-connection: <base64-encoded-sql-db-connection-string>
 ---
+# Services
+# Define os serviços que expõem os pods dos microsserviços
+# Cada serviço garante a comunicação interna dentro do cluster Kubernetes
+
+# Serviço para a interface de usuário (frontend)
 apiVersion: v1
 kind: Service
 metadata:
@@ -27,6 +36,7 @@ spec:
       targetPort: 80
   type: ClusterIP
 ---
+# Serviço para a interface de administração do site
 apiVersion: v1
 kind: Service
 metadata:
@@ -41,6 +51,7 @@ spec:
       targetPort: 8081
   type: ClusterIP
 ---
+# Serviço para o gerenciamento de produtos
 apiVersion: v1
 kind: Service
 metadata:
@@ -55,6 +66,7 @@ spec:
       targetPort: 8082
   type: ClusterIP
 ---
+# Serviço para o processamento de pedidos
 apiVersion: v1
 kind: Service
 metadata:
@@ -69,6 +81,7 @@ spec:
       targetPort: 8083
   type: ClusterIP
 ---
+# Serviço para a gestão de clientes
 apiVersion: v1
 kind: Service
 metadata:
@@ -83,6 +96,7 @@ spec:
       targetPort: 8084
   type: ClusterIP
 ---
+# Serviço para o sistema de pagamento
 apiVersion: v1
 kind: Service
 metadata:
@@ -97,6 +111,7 @@ spec:
       targetPort: 8085
   type: ClusterIP
 ---
+# Serviço para autenticação e autorização
 apiVersion: v1
 kind: Service
 metadata:
@@ -111,6 +126,7 @@ spec:
       targetPort: 8086
   type: ClusterIP
 ---
+# Serviço para notificações
 apiVersion: v1
 kind: Service
 metadata:
@@ -125,6 +141,7 @@ spec:
       targetPort: 8087
   type: ClusterIP
 ---
+# Serviço para gerenciamento de estoque
 apiVersion: v1
 kind: Service
 metadata:
@@ -139,6 +156,7 @@ spec:
       targetPort: 8088
   type: ClusterIP
 ---
+# Serviço para envio e logística
 apiVersion: v1
 kind: Service
 metadata:
@@ -153,6 +171,10 @@ spec:
       targetPort: 8089
   type: ClusterIP
 ---
+# Network Policies
+# Define políticas de rede para controlar o tráfego de entrada e saída dos pods
+
+# Política de rede padrão que bloqueia todo o tráfego de entrada e saída por padrão
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -166,6 +188,7 @@ spec:
   ingress: []
   egress: []
 ---
+# Política de rede que permite o tráfego de entrada no serviço order-processing do serviço ui-frontend
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -186,6 +209,9 @@ spec:
         - protocol: TCP
           port: 8083
 ---
+# Ingress Controller
+# Gerencia o acesso externo aos serviços no cluster Kubernetes, roteando tráfego HTTP/HTTPS
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -266,3 +292,17 @@ spec:
                 name: shipping-logistics
                 port:
                   number: 8089
+# Namespace:
+# Explica que o namespace ecommerce é criado para organizar e isolar todos os recursos da aplicação.
+
+# Secrets:
+# Explica que o secret db-secrets é usado para armazenar de forma segura as strings de conexão dos bancos de dados.
+#Services:
+# Cada serviço é documentado para explicar qual microsserviço ele expõe e como ele é acessado.
+
+#Network Policies:
+# Descreve as políticas de rede que controlam o tráfego de entrada e saída, incluindo uma política padrão de negação e uma política
+# específica para permitir comunicação entre certos serviços.
+
+#Ingress Controller:
+# Explica que o Ingress Controller gerencia o acesso externo e roteia o tráfego HTTP/HTTPS com base nas regras definidas.
